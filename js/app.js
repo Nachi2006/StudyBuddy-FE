@@ -221,8 +221,25 @@ document.addEventListener('DOMContentLoaded', () => {
         list.innerHTML = filtered.map(assign => {
             const d = new Date(assign.deadline);
             const isCompleted = assign.status === 'completed';
-            const subject = currentData.subjects.find(s => s._id === assign.subjectId);
-            const subName = subject ? subject.subjectName : 'Unknown Subject';
+            let subject = currentData.subjects.find(s => s._id === assign.subjectId);
+            let subName = subject ? subject.subjectName : 'Unknown Subject';
+            
+            // If subject not found locally, try to fetch it
+            if (!subject && assign.subjectId) {
+                const subjectId = typeof assign.subjectId === 'object' ? assign.subjectId._id || assign.subjectId.id || assign.subjectId : assign.subjectId;
+                api.getSubject(subjectId).then(subjectData => {
+                    if (subjectData) {
+                        // Update the assignment display with fetched subject name
+                        const assignElement = document.querySelector(`[data-id="${assign._id}"] .tag`);
+                        if (assignElement) {
+                            assignElement.textContent = subjectData.subjectName;
+                        }
+                    }
+                }).catch(err => {
+                    console.warn('Failed to fetch subject:', err);
+                });
+                subName = `Subject ID: ${subjectId}`;
+            }
 
             return `
             <div class="item-card glass-panel mb-2 flex-between" data-id="${assign._id}">
