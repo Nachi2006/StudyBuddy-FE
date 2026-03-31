@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StudyBuddy - Learn & Manage</title>
+    <meta name="description" content="StudyBuddy - Manage your subjects, notes, assignments, and doubts.">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="css/style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <style>
+        /* Additional responsive enhancements */
+        @media (max-width: 768px) {
+            .dashboard-stats {
+                grid-template-columns: 1fr;
+            }
+            .dashboard-grids {
+                grid-template-columns: 1fr;
+            }
+            .planner-grid {
+                grid-template-columns: 1fr;
+            }
+            .grid-layout {
+                grid-template-columns: 1fr;
+            }
+            .view-header.flex-between {
+                flex-direction: column;
+                gap: 1rem;
+                align-items: flex-start;
+            }
+            .flex-row.gap-4 {
+                flex-direction: column;
+            }
+            .filter-tabs {
+                flex-wrap: wrap;
+            }
+            .item-card.flex-between {
+                flex-direction: column;
+                gap: 1rem;
+            }
+            .task-item {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+        }
+        
+        /* Enhanced mobile navigation */
+        @media (max-width: 768px) {
+            .nav-container {
+                padding: 0 1rem;
+            }
+            .nav-brand span {
+                font-size: 1.2rem;
+            }
+            .nav-menu {
+                position: absolute;
+                top: var(--nav-height);
+                left: 0;
+                right: 0;
+                background: var(--color-bg);
+                flex-direction: column;
+                padding: 1rem;
+                border-bottom: var(--border-width) solid var(--color-dark);
+                transform: translateY(-100%);
+                opacity: 0;
+                pointer-events: none;
+                transition: var(--transition);
+                z-index: -1;
+                box-shadow: 0 4px 0 var(--color-dark);
+            }
+            .nav-menu.show {
+                transform: translateY(0);
+                opacity: 1;
+                pointer-events: auto;
+            }
+            .mobile-menu-toggle {
+                display: flex !important;
+                background: var(--color-light);
+                border: var(--border-width) solid var(--color-dark);
+                border-radius: var(--border-radius);
+                padding: 0.5rem 0.8rem;
+                font-size: 1.2rem;
+                box-shadow: 2px 2px 0 var(--color-dark);
+            }
+            .mobile-menu-toggle:active {
+                transform: translate(2px, 2px);
+                box-shadow: 0 0 0 var(--color-dark);
+            }
+        }
+        
+        /* Auth wrapper mobile */
+        @media (max-width: 480px) {
+            .auth-wrapper {
+                margin: 2rem 1rem;
+                padding: 1.5rem;
+            }
+            .auth-tabs {
+                flex-direction: column;
+            }
+            .auth-tab:first-child,
+            .auth-tab:last-child {
+                border-radius: 0;
+            }
+            .auth-tab:first-child {
+                border-radius: 8px 8px 0 0;
+            }
+            .auth-tab:last-child {
+                border-radius: 0 0 8px 8px;
+                border-left: var(--border-width) solid var(--color-dark);
+                border-top: none;
+            }
+        }
+        
+        /* Smooth scroll and better touch targets */
+        @media (pointer: coarse) {
+            .btn, button, .nav-link {
+                min-height: 44px;
+                min-width: 44px;
+            }
+            .filter-btn {
+                padding: 0.75rem 1rem;
+            }
+        }
+        
+        /* Form control enhancements for mobile */
+        .form-control-sm {
+            padding: 0.6rem 1rem;
+            font-size: 16px; /* Prevents zoom on iOS */
+        }
+        
+        /* Answer form styling */
+        .answer-form {
+            gap: 0.5rem;
+        }
+        .answer-form input {
+            font-size: 16px;
+        }
+        
+        /* Better spacing for mobile cards */
+        @media (max-width: 768px) {
+            .item-card {
+                padding: 1rem;
+            }
+            .stat-card {
+                padding: 1rem;
+            }
+            .stat-icon {
+                width: 50px;
+                height: 50px;
+            }
+            .stat-content h2 {
+                font-size: 2rem;
+            }
+        }
+        
+        /* Touch-friendly assignment actions */
+        .btn-complete-assign,
+        .btn-delete-assign {
+            min-width: 44px;
+            min-height: 44px;
+        }
+        
+        /* Better scrollbar for webkit */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: var(--color-bg);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: var(--color-dark);
+            border-radius: 4px;
+        }
+        
+        /* Loading state improvements */
+        .spinner {
+            border-width: 4px;
+        }
+        
+        /* Empty state mobile */
+        @media (max-width: 768px) {
+            .empty-state.p-5 {
+                padding: 2rem 1rem;
+            }
+        }
+        
+        /* Toast positioning for mobile */
+        @media (max-width: 480px) {
+            .toast-container {
+                left: 1rem;
+                right: 1rem;
+                bottom: 1rem;
+            }
+            .toast {
+                min-width: auto;
+            }
+        }
+    </style>
+</head>
+<body class="theme-dark">
+    <!-- Background Design -->
+    <div class="bg-shape bg-primary"></div>
+    <div class="bg-shape bg-secondary"></div>
+
+    <!-- Main Navigation (Hidden until logged in) -->
+    <header id="main-nav" class="hidden glass-panel">
+        <div class="nav-container">
+            <div class="nav-brand">
+                <i class="fas fa-book-reader"></i>
+                <span>StudyBuddy</span>
+            </div>
+            
+            <button class="mobile-menu-toggle" id="menu-toggle" aria-label="Toggle navigation menu">
+                <i class="fas fa-bars"></i>
+            </button>
+
+            <nav class="nav-menu" id="nav-menu">
+                <a href="#" class="nav-link active" data-target="view-dashboard"><i class="fas fa-chart-line"></i> Dashboard</a>
+                <a href="#" class="nav-link" data-target="view-subjects"><i class="fas fa-book"></i> Subjects & Notes</a>
+                <a href="#" class="nav-link" data-target="view-assignments"><i class="fas fa-tasks"></i> Assignments</a>
+                <a href="#" class="nav-link" data-target="view-doubts"><i class="fas fa-question-circle"></i> Doubts</a>
+                <a href="#" class="nav-link" data-target="view-planner"><i class="fas fa-calendar-alt"></i> Planner</a>
+            </nav>
+
+            <div class="nav-profile hidden" id="nav-profile">
+                <span id="current-user-name">Student</span>
+                <button id="btn-logout" class="btn btn-sm btn-outline-danger" title="Logout">
+                    <i class="fas fa-sign-out-alt"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main id="app-container">
+        <!-- LOADER -->
+        <div id="full-loader" class="hidden">
+            <div class="spinner"></div>
+        </div>
+
+        <!-- AUTH VIEW (Login/Signup) -->
+        <section id="view-auth" class="view active">
+            <div class="auth-wrapper glass-panel">
+                <div class="auth-header">
+                    <h2><i class="fas fa-user-graduate"></i> Welcome to StudyBuddy</h2>
+                    <p>Log in or create an account to start managing your learning.</p>
+                </div>
+                
+                <div class="auth-tabs">
+                    <button class="auth-tab active" id="tab-login">Login</button>
+                    <button class="auth-tab" id="tab-signup">Sign Up</button>
+                </div>
+
+                <!-- Login Form -->
+                <form id="form-login" class="auth-form" novalidate>
+                    <div class="form-group">
+                        <label for="login-email">Email Address</label>
+                        <input type="email" id="login-email" required placeholder="you@example.com" autocomplete="email">
+                        <span class="error-text">Please enter a valid email.</span>
+                    </div>
+                    <div class="form-group">
+                        <label for="login-password">Password</label>
+                        <input type="password" id="login-password" required placeholder="••••••••" autocomplete="current-password">
+                        <span class="error-text">Password is required.</span>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100">
+                        <span>Login</span> <i class="fas fa-arrow-right"></i>
+                    </button>
+                </form>
+
+                <!-- Signup Form -->
+                <form id="form-signup" class="auth-form hidden" novalidate>
+                    <div class="form-group">
+                        <label for="signup-name">Full Name</label>
+                        <input type="text" id="signup-name" required placeholder="John Doe" autocomplete="name">
+                        <span class="error-text">Name is required (min 2 chars).</span>
+                    </div>
+                    <div class="form-group">
+                        <label for="signup-email">Email Address</label>
+                        <input type="email" id="signup-email" required placeholder="you@example.com" autocomplete="email">
+                        <span class="error-text">Please enter a valid email.</span>
+                    </div>
+                    <div class="form-group">
+                        <label for="signup-password">Password</label>
+                        <input type="password" id="signup-password" required minlength="6" placeholder="Min 6 characters" autocomplete="new-password">
+                        <span class="error-text">Password must be at least 6 characters.</span>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100">
+                        <span>Create Account</span> <i class="fas fa-user-plus"></i>
+                    </button>
+                </form>
+            </div>
+        </section>
+
+        <!-- DASHBOARD VIEW -->
+        <section id="view-dashboard" class="view hidden container">
+            <div class="view-header">
+                <h1>Overview</h1>
+                <p>Welcome back! Here's your study summary.</p>
+            </div>
+            
+            <!-- Dynamic Dashboard Stats -->
+            <div class="dashboard-stats" id="dashboard-stats-container">
+                <div class="stat-card glass-panel">
+                    <div class="stat-icon bg-primary-light"><i class="fas fa-book"></i></div>
+                    <div class="stat-content">
+                        <h3>Subjects</h3>
+                        <h2 id="stat-subjects">0</h2>
+                    </div>
+                </div>
+                <div class="stat-card glass-panel">
+                    <div class="stat-icon bg-secondary-light"><i class="fas fa-file-alt"></i></div>
+                    <div class="stat-content">
+                        <h3>Notes</h3>
+                        <h2 id="stat-notes">0</h2>
+                    </div>
+                </div>
+                <div class="stat-card glass-panel">
+                    <div class="stat-icon bg-warning-light"><i class="fas fa-tasks"></i></div>
+                    <div class="stat-content">
+                        <h3>Assignments</h3>
+                        <h2 id="stat-assignments">0</h2>
+                    </div>
+                </div>
+            </div>
+
+            <div class="dashboard-grids">
+                <div class="dashboard-section glass-panel">
+                    <h3><i class="fas fa-clock"></i> Upcoming Assignments</h3>
+                    <ul class="recent-list" id="dashboard-assignments-list">
+                        <li class="empty-state">No upcoming assignments.</li>
+                    </ul>
+                </div>
+                <div class="dashboard-section glass-panel">
+                    <h3><i class="fas fa-file-pdf"></i> Recent Notes</h3>
+                    <ul class="recent-list" id="dashboard-notes-list">
+                        <li class="empty-state">No recent notes.</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- SUBJECTS & NOTES VIEW -->
+        <section id="view-subjects" class="view hidden container">
+            <div class="view-header flex-between">
+                <div>
+                    <h1>Subjects & Notes</h1>
+                    <p>Organize your knowledge.</p>
+                </div>
+                <button class="btn btn-primary" id="btn-add-subject"><i class="fas fa-plus"></i> Add Subject</button>
+            </div>
+
+            <!-- Subject Form (Hidden by default) -->
+            <div id="subject-form-container" class="glass-panel hidden mb-4">
+                <h3><i class="fas fa-folder-plus"></i> Create New Subject</h3>
+                <form id="form-add-subject" class="flex-row">
+                    <div class="form-group flex-grow m-0">
+                        <input type="text" id="subject-name" required placeholder="Subject Name (e.g., Mathematics)">
+                    </div>
+                    <button type="submit" class="btn btn-primary">Save</button>
+                    <button type="button" class="btn btn-outline" id="btn-cancel-subject">Cancel</button>
+                </form>
+            </div>
+
+            <!-- Add Note Form (Hidden by default) -->
+            <div id="note-form-container" class="glass-panel hidden mb-4">
+                <h3><i class="fas fa-upload"></i> Upload New Note</h3>
+                <form id="form-add-note">
+                    <div class="form-group">
+                        <label for="note-title">Title</label>
+                        <input type="text" id="note-title" required placeholder="Note Topic">
+                    </div>
+                    <div class="form-group">
+                        <label for="note-subject">Subject</label>
+                        <select id="note-subject" required>
+                            <option value="">Select a Subject</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="note-link">Resource Link (PDF, Doc, Drive Link)</label>
+                        <input type="url" id="note-link" required placeholder="https://...">
+                    </div>
+                    <div class="flex-row justify-end">
+                        <button type="button" class="btn btn-outline mr-2" id="btn-cancel-note">Cancel</button>
+                        <button type="submit" class="btn btn-primary"><i class="fas fa-upload"></i> Upload Note</button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Search Filter -->
+            <div class="search-bar glass-panel mb-4">
+                <i class="fas fa-search"></i>
+                <input type="text" id="search-notes-input" placeholder="Search notes by title or subject...">
+            </div>
+
+            <div class="flex-between mb-2">
+                <h3><i class="fas fa-folder-open"></i> Your Materials</h3>
+                <button class="btn btn-secondary btn-sm" id="btn-add-note"><i class="fas fa-upload"></i> Upload Note</button>
+            </div>
+
+            <!-- Dynamic Notes List -->
+            <div class="grid-layout" id="notes-grid">
+                <div class="empty-state w-100 p-5 text-center">No subjects or notes found. Start by adding one.</div>
+            </div>
+        </section>
+
+        <!-- ASSIGNMENTS VIEW -->
+        <section id="view-assignments" class="view hidden container">
+            <div class="view-header flex-between">
+                <div>
+                    <h1>Assignments Tracker</h1>
+                    <p>Stay on top of deadlines.</p>
+                </div>
+                <button class="btn btn-primary" id="btn-add-assignment-modal"><i class="fas fa-plus"></i> New Assignment</button>
+            </div>
+
+            <!-- Add Assignment Form -->
+            <div id="assignment-form-container" class="glass-panel hidden mb-4">
+                <h3><i class="fas fa-plus-circle"></i> Create New Assignment</h3>
+                <form id="form-add-assignment">
+                    <div class="form-group">
+                        <label for="assign-title">Title</label>
+                        <input type="text" id="assign-title" required placeholder="E.g., Calc Homework">
+                    </div>
+                    <div class="flex-row gap-4">
+                        <div class="form-group flex-grow">
+                            <label for="assign-subject">Subject</label>
+                            <select id="assign-subject" required>
+                                <option value="">Select a Subject</option>
+                            </select>
+                        </div>
+                        <div class="form-group flex-grow">
+                            <label for="assign-deadline">Deadline</label>
+                            <input type="datetime-local" id="assign-deadline" required>
+                        </div>
+                    </div>
+                    <div class="flex-row justify-end">
+                        <button type="button" class="btn btn-outline mr-2" id="btn-cancel-assignment">Cancel</button>
+                        <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Save Assignment</button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Filter Status -->
+            <div class="filter-tabs mb-4">
+                <button class="filter-btn active" data-filter="all">All</button>
+                <button class="filter-btn" data-filter="incomplete">Pending</button>
+                <button class="filter-btn" data-filter="completed">Completed</button>
+            </div>
+
+            <!-- Assignments List -->
+            <div class="assignments-list" id="assignments-list">
+                <div class="empty-state p-5 text-center">No assignments to show.</div>
+            </div>
+        </section>
+
+        <!-- DOUBTS VIEW -->
+        <section id="view-doubts" class="view hidden container">
+            <div class="view-header flex-between">
+                <div>
+                    <h1>Discussion & Doubts</h1>
+                    <p>Ask questions and help others.</p>
+                </div>
+            </div>
+
+            <!-- Ask Question Form -->
+            <div class="glass-panel mb-4">
+                <h3><i class="fas fa-question-circle"></i> Ask a Question</h3>
+                <form id="form-add-doubt" class="flex-column">
+                    <div class="form-group m-0 pb-2">
+                        <textarea id="doubt-question" required placeholder="What's your question? Be specific to get better answers..." rows="3" style="resize:vertical;"></textarea>
+                    </div>
+                    <div class="flex-row justify-end">
+                        <button type="submit" class="btn btn-primary"><i class="fas fa-paper-plane"></i> Post Doubt</button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Doubts Feed -->
+            <div class="doubts-feed" id="doubts-feed">
+               <div class="empty-state p-5 text-center">No doubts asked yet. Be the first!</div>
+            </div>
+        </section>
+
+        <!-- PLANNER VIEW (LocalStorage based) -->
+        <section id="view-planner" class="view hidden container">
+            <div class="view-header">
+                <h1><i class="fas fa-calendar-check"></i> Study Planner</h1>
+                <p>Plan your daily study goals.</p>
+            </div>
+
+            <div class="planner-grid">
+                <!-- Add Task -->
+                <div class="glass-panel planner-form-container">
+                    <h3><i class="fas fa-plus"></i> Add Task</h3>
+                    <form id="form-planner" novalidate>
+                        <div class="form-group">
+                            <label for="task-desc">Task Description</label>
+                            <input type="text" id="task-desc" required placeholder="Revise chapter 2...">
+                            <span class="error-text">Description required.</span>
+                        </div>
+                        <div class="form-group">
+                            <label for="task-date">Date</label>
+                            <input type="date" id="task-date" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="fas fa-plus"></i> Add to Plan
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Task List -->
+                <div class="glass-panel planner-list-container">
+                    <h3><i class="fas fa-list-check"></i> Your Plan</h3>
+                    <!-- Planner Filter Date -->
+                    <div class="form-group">
+                         <label for="planner-filter-date">Filter by Date</label>
+                         <input type="date" id="planner-filter-date">
+                    </div>
+                    <ul class="task-list" id="planner-tasks">
+                        <!-- Populated by LocalStorage DOM Manipulation -->
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- TOAST NOTIFICATIONS -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <!-- Scripts -->
+    <script src="js/api.js"></script>
+    <script src="js/app.js"></script>
+    <script>
+        $(document).ready(function() {
+            $("#tab-login").click(function(){
+                alert("Login Button Clicked");
+                console.log("Hello World");
+            })
+        });
+    </script>
+</body>
+</html>
