@@ -7,10 +7,14 @@
     <meta name="description" content="StudyBuddy - Manage your subjects, notes, assignments, and doubts.">
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Custom CSS -->
     <link rel="stylesheet" href="css/style.css">
+    <!-- AngularJS -->
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.8.2/angular.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
     <style>
         /* Additional responsive enhancements */
@@ -202,7 +206,7 @@
         }
     </style>
 </head>
-<body class="theme-dark">
+<body class="theme-dark" ng-app="StudyBuddyApp" ng-controller="MainController">
     <!-- Background Design -->
     <div class="bg-shape bg-primary"></div>
     <div class="bg-shape bg-secondary"></div>
@@ -303,27 +307,39 @@
                 <p>Welcome back! Here's your study summary.</p>
             </div>
             
-            <!-- Dynamic Dashboard Stats -->
-            <div class="dashboard-stats" id="dashboard-stats-container">
-                <div class="stat-card glass-panel">
-                    <div class="stat-icon bg-primary-light"><i class="fas fa-book"></i></div>
-                    <div class="stat-content">
-                        <h3>Subjects</h3>
-                        <h2 id="stat-subjects">0</h2>
+            <!-- Dynamic Dashboard Stats (AngularJS) -->
+            <div class="row g-3 mb-4" id="dashboard-stats-container">
+                <div class="col-12 col-md-4">
+                    <div class="card stat-card glass-panel h-100 border-0 shadow-sm">
+                        <div class="card-body d-flex align-items-center">
+                            <div class="stat-icon bg-primary-light rounded p-3 me-3"><i class="fas fa-book fs-4"></i></div>
+                            <div class="stat-content">
+                                <h6 class="card-subtitle mb-1 text-muted">Subjects</h6>
+                                <h2 class="card-title mb-0 fw-bold">{{subjects.length}}</h2>
+                            </div>
+                        </div>
                     </div>
                 </div>
-                <div class="stat-card glass-panel">
-                    <div class="stat-icon bg-secondary-light"><i class="fas fa-file-alt"></i></div>
-                    <div class="stat-content">
-                        <h3>Notes</h3>
-                        <h2 id="stat-notes">0</h2>
+                <div class="col-12 col-md-4">
+                    <div class="card stat-card glass-panel h-100 border-0 shadow-sm">
+                        <div class="card-body d-flex align-items-center">
+                            <div class="stat-icon bg-secondary-light rounded p-3 me-3"><i class="fas fa-file-alt fs-4"></i></div>
+                            <div class="stat-content">
+                                <h6 class="card-subtitle mb-1 text-muted">Notes</h6>
+                                <h2 class="card-title mb-0 fw-bold">{{notes.length}}</h2>
+                            </div>
+                        </div>
                     </div>
                 </div>
-                <div class="stat-card glass-panel">
-                    <div class="stat-icon bg-warning-light"><i class="fas fa-tasks"></i></div>
-                    <div class="stat-content">
-                        <h3>Assignments</h3>
-                        <h2 id="stat-assignments">0</h2>
+                <div class="col-12 col-md-4">
+                    <div class="card stat-card glass-panel h-100 border-0 shadow-sm">
+                        <div class="card-body d-flex align-items-center">
+                            <div class="stat-icon bg-warning-light rounded p-3 me-3"><i class="fas fa-tasks fs-4"></i></div>
+                            <div class="stat-content">
+                                <h6 class="card-subtitle mb-1 text-muted">Assignments</h6>
+                                <h2 class="card-title mb-0 fw-bold">{{assignments.length}}</h2>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -332,13 +348,19 @@
                 <div class="dashboard-section glass-panel">
                     <h3><i class="fas fa-clock"></i> Upcoming Assignments</h3>
                     <ul class="recent-list" id="dashboard-assignments-list">
-                        <li class="empty-state">No upcoming assignments.</li>
+                        <li class="empty-state" ng-if="getRecentAssignments().length === 0">No upcoming assignments.</li>
+                        <li ng-repeat="a in getRecentAssignments()">
+                             <b>{{a.title}}</b> <small class="text-warning ml-2">Due soon</small>
+                        </li>
                     </ul>
                 </div>
                 <div class="dashboard-section glass-panel">
                     <h3><i class="fas fa-file-pdf"></i> Recent Notes</h3>
                     <ul class="recent-list" id="dashboard-notes-list">
-                        <li class="empty-state">No recent notes.</li>
+                        <li class="empty-state" ng-if="getRecentNotes().length === 0">No recent notes.</li>
+                        <li ng-repeat="n in getRecentNotes()">
+                             <a ng-href="{{n.fileLink}}" target="_blank"><i class="fas fa-file-pdf"></i> {{n.title}}</a>
+                        </li>
                     </ul>
                 </div>
             </div>
@@ -391,10 +413,39 @@
                 </form>
             </div>
 
-            <!-- Search Filter -->
+            <!-- Subjects List (AngularJS) -->
+            <div class="glass-panel mb-4">
+                <div class="flex-between mb-3">
+                    <h3 style="margin:0"><i class="fas fa-folder"></i> Your Subjects</h3>
+                    <small class="text-muted">{{subjects.length}} subject(s)</small>
+                </div>
+                <div class="empty-state p-3 text-center" ng-if="subjects.length === 0">No subjects yet. Add your first subject above.</div>
+                <div class="flex-row flex-wrap" style="gap:0.5rem;" ng-if="subjects.length > 0">
+                    <!-- View Mode -->
+                    <div class="flex-between glass-panel" style="padding:0.5rem 0.75rem; min-width:180px; flex:1 1 180px; max-width:320px;"
+                         ng-repeat="sub in subjects"
+                         ng-if="editingSubject !== sub._id">
+                        <span><i class="fas fa-folder-open" style="color:var(--color-primary)"></i>&nbsp;{{sub.subjectName}}</span>
+                        <div class="flex-row" style="gap:0.25rem; margin-left:0.5rem;">
+                            <button class="btn btn-sm btn-outline" ng-click="startEditSubject(sub)" title="Rename"><i class="fas fa-edit"></i></button>
+                            <button class="btn btn-sm btn-outline-danger" ng-click="deleteSubject(sub._id)" title="Delete"><i class="fas fa-trash"></i></button>
+                        </div>
+                    </div>
+                    <!-- Edit Mode -->
+                    <div class="flex-row glass-panel" style="padding:0.5rem 0.75rem; gap:0.5rem; min-width:180px; flex:1 1 180px; max-width:320px; align-items:center;"
+                         ng-repeat="sub in subjects"
+                         ng-if="editingSubject === sub._id">
+                        <input type="text" ng-model="editSubjectData.name" class="form-control-sm" style="flex:1;" placeholder="Subject name" ng-keyup="$event.key === 'Escape' && cancelEditSubject()">
+                        <button class="btn btn-sm btn-primary" ng-click="saveEditSubject(sub._id)"><i class="fas fa-save"></i></button>
+                        <button class="btn btn-sm btn-outline" ng-click="cancelEditSubject()"><i class="fas fa-times"></i></button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Search Filter (AngularJS) -->
             <div class="search-bar glass-panel mb-4">
                 <i class="fas fa-search"></i>
-                <input type="text" id="search-notes-input" placeholder="Search notes by title or subject...">
+                <input type="text" id="search-notes-input" placeholder="Search notes by title or subject..." ng-model="noteSearchTerm">
             </div>
 
             <div class="flex-between mb-2">
@@ -402,9 +453,47 @@
                 <button class="btn btn-secondary btn-sm" id="btn-add-note"><i class="fas fa-upload"></i> Upload Note</button>
             </div>
 
-            <!-- Dynamic Notes List -->
+            <!-- Dynamic Notes List (AngularJS) -->
             <div class="grid-layout" id="notes-grid">
-                <div class="empty-state w-100 p-5 text-center">No subjects or notes found. Start by adding one.</div>
+                <div class="empty-state w-100 p-5 text-center" ng-if="(notes | filter:notesFilter).length === 0">No subjects or notes found. Start by adding one.</div>
+                
+                <div class="item-card glass-panel" ng-repeat="note in notes | filter:notesFilter" data-id="{{note._id}}">
+                    <!-- View Mode -->
+                    <div ng-if="editingNote !== note._id">
+                        <div class="item-header">
+                            <span class="tag">{{getSubjectName(note.subjectId)}}</span>
+                        </div>
+                        <h3>{{note.title}}</h3>
+                        <a ng-href="{{note.fileLink}}" target="_blank" class="btn btn-sm btn-outline mt-3 w-100"><i class="fas fa-external-link-alt"></i> Open Note</a>
+                        <div class="flex-row mt-2" style="gap:0.5rem; justify-content:flex-end;">
+                            <button class="btn btn-sm btn-outline" ng-click="startEditNote(note)" title="Edit"><i class="fas fa-edit"></i></button>
+                            <button class="btn btn-sm btn-outline-danger" ng-click="deleteNote(note._id)" title="Delete"><i class="fas fa-trash"></i></button>
+                        </div>
+                    </div>
+                    <!-- Edit Mode -->
+                    <div ng-if="editingNote === note._id">
+                        <h4><i class="fas fa-edit"></i> Edit Note</h4>
+                        <div class="form-group">
+                            <label>Title</label>
+                            <input type="text" ng-model="editNoteData.title" class="form-control-sm w-100" placeholder="Note title">
+                        </div>
+                        <div class="form-group">
+                            <label>Subject</label>
+                            <select ng-model="editNoteData.subjectId" class="form-control-sm w-100">
+                                <option value="">Select a Subject</option>
+                                <option ng-repeat="sub in subjects" value="{{sub._id}}">{{sub.subjectName}}</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Link</label>
+                            <input type="url" ng-model="editNoteData.fileLink" class="form-control-sm w-100" placeholder="https://...">
+                        </div>
+                        <div class="flex-row" style="gap:0.5rem; justify-content:flex-end;">
+                            <button class="btn btn-sm btn-outline" ng-click="cancelEditNote()">Cancel</button>
+                            <button class="btn btn-sm btn-primary" ng-click="saveEditNote(note._id)"><i class="fas fa-save"></i> Save</button>
+                        </div>
+                    </div>
+                </div>
             </div>
         </section>
 
@@ -445,16 +534,80 @@
                 </form>
             </div>
 
-            <!-- Filter Status -->
+            <!-- Filter Status (AngularJS) -->
             <div class="filter-tabs mb-4">
-                <button class="filter-btn active" data-filter="all">All</button>
-                <button class="filter-btn" data-filter="incomplete">Pending</button>
-                <button class="filter-btn" data-filter="completed">Completed</button>
+                <button class="filter-btn" ng-class="{'active': assignmentFilterStatus === 'all'}" ng-click="setAssignmentFilter('all')">All</button>
+                <button class="filter-btn" ng-class="{'active': assignmentFilterStatus === 'incomplete'}" ng-click="setAssignmentFilter('incomplete')">Pending</button>
+                <button class="filter-btn" ng-class="{'active': assignmentFilterStatus === 'complete'}" ng-click="setAssignmentFilter('complete')">Completed</button>
             </div>
 
-            <!-- Assignments List -->
+            <!-- Assignments List (AngularJS) -->
             <div class="assignments-list" id="assignments-list">
-                <div class="empty-state p-5 text-center">No assignments to show.</div>
+                <div class="empty-state p-5 text-center" ng-if="(assignments | filter:statusFilter).length === 0">No assignments to show.</div>
+
+                <div class="item-card glass-panel mb-2"
+                     ng-repeat="assign in assignments | filter:statusFilter"
+                     data-id="{{assign._id}}">
+
+                    <!-- View Mode -->
+                    <div class="flex-between" ng-if="editingAssignment !== assign._id">
+                        <div>
+                            <div class="flex-row gap-4 mb-2">
+                                <span class="tag">{{getSubjectName(assign.subjectId)}}</span>
+                                <span class="status-pill status-{{assign.status === 'complete' ? 'completed' : 'pending'}}">
+                                    {{assign.status === 'complete' ? 'Completed' : 'Pending'}}
+                                </span>
+                            </div>
+                            <h3 class="m-0">{{assign.title}}</h3>
+                            <small class="text-muted"><i class="fas fa-clock"></i> Due: {{formatDate(assign.deadline)}}</small>
+                        </div>
+                        <div class="flex-row" style="gap:0.25rem;">
+                            <button class="btn btn-sm btn-success btn-complete-assign"
+                                    ng-if="assign.status !== 'complete'"
+                                    ng-click="completeAssignment(assign._id)"
+                                    title="Mark Complete">
+                                <i class="fas fa-check"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline"
+                                    ng-click="startEditAssignment(assign)"
+                                    title="Edit">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-danger btn-delete-assign"
+                                    ng-click="deleteAssignment(assign._id)"
+                                    title="Delete">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Edit Mode -->
+                    <div ng-if="editingAssignment === assign._id">
+                        <h4 class="mb-3"><i class="fas fa-edit"></i> Edit Assignment</h4>
+                        <div class="form-group">
+                            <label>Title</label>
+                            <input type="text" ng-model="editAssignData.title" class="form-control-sm w-100" placeholder="Assignment title">
+                        </div>
+                        <div class="flex-row gap-4">
+                            <div class="form-group flex-grow">
+                                <label>Subject</label>
+                                <select ng-model="editAssignData.subjectId" class="form-control-sm w-100">
+                                    <option value="">Select a Subject</option>
+                                    <option ng-repeat="sub in subjects" value="{{sub._id}}">{{sub.subjectName}}</option>
+                                </select>
+                            </div>
+                            <div class="form-group flex-grow">
+                                <label>Deadline</label>
+                                <input type="datetime-local" ng-model="editAssignData.deadline" class="form-control-sm w-100">
+                            </div>
+                        </div>
+                        <div class="flex-row" style="gap:0.5rem; justify-content:flex-end;">
+                            <button class="btn btn-sm btn-outline" ng-click="cancelEditAssignment()">Cancel</button>
+                            <button class="btn btn-sm btn-primary" ng-click="saveEditAssignment(assign._id)"><i class="fas fa-save"></i> Save</button>
+                        </div>
+                    </div>
+
+                </div>
             </div>
         </section>
 
@@ -480,9 +633,53 @@
                 </form>
             </div>
 
-            <!-- Doubts Feed -->
+            <!-- Doubts Feed (AngularJS) -->
             <div class="doubts-feed" id="doubts-feed">
-               <div class="empty-state p-5 text-center">No doubts asked yet. Be the first!</div>
+               <div class="empty-state p-5 text-center" ng-if="doubts.length === 0">No doubts asked yet. Be the first!</div>
+
+               <div class="glass-panel mb-4" ng-repeat="doubt in doubts">
+                   <!-- VIEW MODE -->
+                   <div ng-if="editingDoubt !== doubt._id">
+                       <div class="flex-between mb-2">
+                           <h4 class="m-0"><i class="fas fa-user-circle text-muted"></i> Student</h4>
+                           <div class="flex-row" style="gap:0.25rem;">
+                               <button class="btn btn-sm btn-outline" ng-click="startEditDoubt(doubt)" title="Edit Doubt">
+                                   <i class="fas fa-edit"></i>
+                               </button>
+                               <button class="btn btn-sm btn-outline-danger" ng-click="deleteDoubt(doubt._id)" title="Delete Doubt">
+                                   <i class="fas fa-trash"></i>
+                               </button>
+                           </div>
+                       </div>
+                       <p class="mb-4 text-lg font-medium">{{doubt.question}}</p>
+
+                       <div class="answers-container pl-4 mb-3">
+                           <div class="p-2 bg-black bg-opacity-20 rounded mb-1 text-sm border-l-2 border-primary pl-2"
+                                style="background: rgba(0,0,0,0.3); padding:0.5rem; margin-top:0.5rem; border-left: 2px solid var(--color-primary)"
+                                ng-repeat="ans in doubt.answers">
+                               {{ans}}
+                           </div>
+                       </div>
+
+                       <form class="flex-row answer-form" ng-submit="postAnswer(doubt._id, doubt.newAnswer)">
+                           <input type="text" required placeholder="Type your answer..." class="flex-grow form-control-sm" ng-model="doubt.newAnswer">
+                           <button type="submit" class="btn btn-sm btn-outline">Reply</button>
+                       </form>
+                   </div>
+                   <!-- EDIT MODE -->
+                   <div ng-if="editingDoubt === doubt._id">
+                        <div class="flex-between mb-2">
+                            <h4 class="m-0"><i class="fas fa-edit"></i> Edit Doubt</h4>
+                        </div>
+                        <div class="form-group mb-2">
+                            <textarea class="form-control-sm w-100" rows="3" ng-model="editDoubtData.question"></textarea>
+                        </div>
+                        <div class="flex-row" style="gap:0.5rem; justify-content:flex-end;">
+                            <button class="btn btn-sm btn-outline" ng-click="cancelEditDoubt()">Cancel</button>
+                            <button class="btn btn-sm btn-primary" ng-click="saveEditDoubt(doubt._id)"><i class="fas fa-save"></i> Save</button>
+                        </div>
+                   </div>
+               </div>
             </div>
         </section>
 
@@ -494,18 +691,18 @@
             </div>
 
             <div class="planner-grid">
-                <!-- Add Task -->
+                <!-- Add Task (AngularJS) -->
                 <div class="glass-panel planner-form-container">
                     <h3><i class="fas fa-plus"></i> Add Task</h3>
-                    <form id="form-planner" novalidate>
+                    <form ng-submit="addTask()" novalidate>
                         <div class="form-group">
                             <label for="task-desc">Task Description</label>
-                            <input type="text" id="task-desc" required placeholder="Revise chapter 2...">
-                            <span class="error-text">Description required.</span>
+                            <input type="text" id="task-desc" required placeholder="Revise chapter 2..." ng-model="newTask.desc">
+                            <span class="error-text" ng-show="plannerForm.desc.$invalid && plannerForm.$submitted">Description required.</span>
                         </div>
                         <div class="form-group">
                             <label for="task-date">Date</label>
-                            <input type="date" id="task-date" required>
+                            <input type="date" id="task-date" required ng-model="newTask.date">
                         </div>
                         <button type="submit" class="btn btn-primary w-100">
                             <i class="fas fa-plus"></i> Add to Plan
@@ -513,16 +710,23 @@
                     </form>
                 </div>
 
-                <!-- Task List -->
+                <!-- Task List (AngularJS) -->
                 <div class="glass-panel planner-list-container">
                     <h3><i class="fas fa-list-check"></i> Your Plan</h3>
                     <!-- Planner Filter Date -->
                     <div class="form-group">
                          <label for="planner-filter-date">Filter by Date</label>
-                         <input type="date" id="planner-filter-date">
+                         <input type="date" id="planner-filter-date" ng-model="plannerFilterDate">
                     </div>
                     <ul class="task-list" id="planner-tasks">
-                        <!-- Populated by LocalStorage DOM Manipulation -->
+                        <li class="empty-state" ng-if="(plannerTasks | filter:{date: plannerFilterDate}).length === 0">No tasks planned for this date.</li>
+                        <li class="task-item" ng-class="{'completed': t.completed}" ng-repeat="t in plannerTasks | filter:{date: plannerFilterDate}">
+                             <span>{{t.desc}}</span>
+                             <div class="task-actions">
+                                 <button class="btn-toggle-task" ng-click="toggleTask(t)"><i class="fas fa-check-circle"></i></button>
+                                 <button class="btn-delete" ng-click="deleteTask(t.id)"><i class="fas fa-times-circle"></i></button>
+                             </div>
+                        </li>
                     </ul>
                 </div>
             </div>
@@ -536,6 +740,7 @@
     <!-- Scripts -->
     <script src="js/api.js"></script>
     <script src="js/app.js"></script>
+    <script src="js/angular-app.js"></script>
     <script>
         $(document).ready(function() {
             $("#tab-login").click(function(){
@@ -544,5 +749,6 @@
             })
         });
     </script>
+
 </body>
 </html>

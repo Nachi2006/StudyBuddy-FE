@@ -1,4 +1,11 @@
 {
+  "name": "studybuddy-fe",
+  "version": "1.0.0",
+  "description": "StudyBuddy Frontend",
+  "scripts": {
+    "start": "npx serve . --listen 3200 --no-clipboard",
+    "dev": "npx live-server --port=3200 --host=localhost --no-browser"
+  },
   "dependencies": {
     "cors": "^2.8.6"
   }
